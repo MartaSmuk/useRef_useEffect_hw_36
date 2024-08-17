@@ -42,7 +42,7 @@ function App() {
   };
 
   useEffect(() => {
-    const itemsJSON = JSON.stringify(items);  //?? was passiert
+    const itemsJSON = JSON.stringify(items);
     localStorage.setItem('myItems', itemsJSON);
     
   }, [items])
