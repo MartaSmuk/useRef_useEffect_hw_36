@@ -1,18 +1,17 @@
-import React, { Component } from 'react';
-import { useState, useRef, useEffect} from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 import NoteList from './NoteList.jsx';
 import NoteItem from './NoteItem.jsx';
 
 function App() {
-   // //manage array of inputs
   const [items, setItems] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null); 
+  const [error, setError] = useState(null);
   const myRef = useRef(null);
 
+  // Fetch user data while mounting
   useEffect(() => {
     async function getUser() {
       try {
@@ -22,11 +21,9 @@ function App() {
           throw new Error('Network response was not ok');
         }
         const json = await response.json();
-        const userName = json.name;
-        const userUserName = json.username;
         setUserData({
-          name: userName,
-          username: userUserName,
+          name: json.name,
+          username: json.username,
         });
         setIsLoading(false);
       } catch (err) {
@@ -37,43 +34,36 @@ function App() {
     getUser();
   }, []);
 
+  // Take items from localStorage while mounting the comp
+  useEffect(() => {
+    const savedItems = localStorage.getItem('myItems');
+    if (savedItems) {
+      setItems(JSON.parse(savedItems));
+    }
+  }, []);
+
+  // Save items to localStorage when its items change
+  useEffect(() => {
+    localStorage.setItem('myItems', JSON.stringify(items));
+  }, [items]);
+
   const doInputChange = () => {
     setInputValue(myRef.current.value);
   };
 
-  useEffect(() => {
-    const itemsJSON = JSON.stringify(items);
-    localStorage.setItem('myItems', itemsJSON);
-    
-  }, [items])
-
   const doSubmit = (event) => {
-    event.preventDefault();  //disable natural feature of the form
-    
-    //generate an id based on array length
+    event.preventDefault();
     const newItem = {
       inputValue: myRef.current.value,
       id: items.length + 1
     };
 
-    if(newItem.inputValue !== '') {
-      //add new item to the array of items
+    if (newItem.inputValue.trim() !== '') {
       setItems((prevItems) => [...prevItems, newItem]);
-      setInputValue(''); //clear input field after submission
+      setInputValue('');
       myRef.current.value = '';
     }
-  }
-
-   //check if the items array is emty. If yes, show "no notes yet"
-    const content = localStorage.getItem('myItems') === '[]' ? (
-      <p>No notes yet</p>
-    ) : (
-      <NoteList>
-        {items.map(item => (
-          <NoteItem key={item.id} note={item.inputValue} />
-        ))}
-      </NoteList>
-    );
+  };
 
   return (
     <div>
@@ -82,8 +72,8 @@ function App() {
       {error && <p>Error: {error}</p>}
       {userData && !isLoading && !error && (
         <div>
-          <p>Name: {userData?.name}</p>
-          <p>Username: {userData?.username}</p>
+          <p>Name: {userData.name}</p>
+          <p>Username: {userData.username}</p>
         </div>
       )}
       <form onSubmit={doSubmit}>
@@ -91,16 +81,22 @@ function App() {
           ref={myRef}
           type="text"
           onChange={doInputChange}
-          placeholder="Enter your name"
-         />
-         <button id="submitButton" type="submit">Ok</button>
+          placeholder="Enter your note"
+        />
+        <button id="submitButton" type="submit">Ok</button>
       </form>
       <h2>Your notes:</h2>
-      <NoteList >
-        {content}
-      </NoteList>
+      {items.length === 0 ? (
+        <p>No notes yet</p>
+      ) : (
+        <NoteList>
+          {items.map((item) => (
+            <NoteItem key={item.id} note={item.inputValue} />
+          ))}
+        </NoteList>
+      )}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
